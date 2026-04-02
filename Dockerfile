@@ -32,15 +32,19 @@ RUN useradd -m -u 1000 steam && \
 
 WORKDIR /home/steam/steamcmd
 
-# Download SteamCMD and set executable permissions
+# Download SteamCMD and set executable permissions on all files
 RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar xvz && \
-    chmod +x steamcmd.sh
+    chmod -R +x . && \
+    chmod -R u+w . && \
+    chown -R steam:steam /home/steam/steamcmd
 
-# Create server directory
+# Create server directory with proper permissions for steam user
 RUN mkdir -p /app/server && \
     mkdir -p /app/config && \
     mkdir -p /app/logs && \
-    chown -R steam:steam /app
+    chown -R steam:steam /app && \
+    chmod -R 755 /app && \
+    chmod -R u+w /app
 
 WORKDIR /app/server
 
