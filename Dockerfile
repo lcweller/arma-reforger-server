@@ -4,15 +4,12 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV STEAM_APPID=1874900
 
-# Install dependencies and .NET runtime
+# Install dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
         wget \
-        lib32z1 \
-        lib32stdc++6 \
-        libc6-i386 \
         libstdc++6 \
         libxss1 \
         libglib2.0-0 \
@@ -24,8 +21,7 @@ RUN apt-get update && \
         procps \
         htop \
         nano \
-        jq \
-        dotnet-runtime-6.0 && \
+        jq && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
