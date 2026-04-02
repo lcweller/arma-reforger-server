@@ -41,21 +41,13 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     fi
 fi
 
-# Auto-fix known invalid fields from older templates.
+# Auto-fix legacy fields from older flat-structure templates (for backward compatibility with persisted configs)
 if command -v jq >/dev/null 2>&1; then
-    CURRENT_PUBLIC_ADDRESS="$(jq -r '.publicAddress // empty' "$CONFIG_DIR/config.json" 2>/dev/null || true)"
-    if [ "$CURRENT_PUBLIC_ADDRESS" = "YOUR_PUBLIC_IP" ]; then
-        log "Detected placeholder publicAddress; setting it to 'local' for valid default startup"
-        TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
-        jq '.publicAddress = "local"' "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
-        mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
-    fi
-    
-    # Remove invalid fields that are not allowed in schema (gamePort, queryPort, a2sQueryPort)
-    INVALID_FIELDS='["gamePort", "queryPort", "a2sQueryPort"]'
-    for field in $(echo "$INVALID_FIELDS" | jq -r '.[]'); do
+    # Remove any old flat-structure fields that shouldn't exist in new nested schema
+    LEGACY_FIELDS='["serverName", "serverDescription", "gameType", "map", "mission", "modsList", "autoSaveInterval", "passwordProtected", "playerPassword", "voiceChat", "battleEye", "spawnPoints", "fastBoot", "maxFps", "difficulty", "gamePort", "queryPort", "a2sQueryPort"]'
+    for field in $(echo "$LEGACY_FIELDS" | jq -r '.[]'); do
         if jq -e ".$field" "$CONFIG_DIR/config.json" >/dev/null 2>&1; then
-            log "Removing invalid $field field from config"
+            log "Removing legacy flat-structure field: $field"
             TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
             jq "del(.$field)" "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
             mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
