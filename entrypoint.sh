@@ -15,7 +15,7 @@ BRANCH="${BRANCH:---}"
 
 log "Starting Arma Reforger Server setup..."
 
-# Download/update server files
+# Download/update server files via SteamCMD
 log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
 $STEAM_DIR/steamcmd.sh +force_install_dir $SERVER_DIR \
                         +login anonymous \

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   arma-reforger:
-    image: ghcr.io/YOUR_USERNAME/arma-reforger-server:latest
+    image: ghcr.io/lcweller/arma-reforger-server:latest
     container_name: arma-reforger-server
     restart: unless-stopped
 
@@ -10,7 +10,7 @@ services:
       SERVER_DIR: /app/server
       CONFIG_DIR: /app/config
       APP_ID: 1874900
-      BRANCH: "--"  # Use "--" for latest, or specify branch like "beta"
+      BRANCH: "--"
 
     ports:
       - "2001:2001/udp"
@@ -19,8 +19,8 @@ services:
 
     volumes:
       - ./config:/app/config
-      - server_data:/app/server
-      - server_logs:/app/logs
+      - ./server:/app/server
+      - ./logs:/app/logs
 
     # Resource limits
     deploy:
