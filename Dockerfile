@@ -42,16 +42,18 @@ RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.t
     chown -R steam:steam /home/steam/steamcmd
 
 # Create server directory with proper permissions
-RUN mkdir -p /app/server && \
-    mkdir -p /app/config && \
-    mkdir -p /app/logs && \
+RUN mkdir -p /app/data/server && \
+    mkdir -p /app/data/config && \
+    mkdir -p /app/data/logs && \
+    mkdir -p /app/defaults && \
     chmod -R 755 /app && \
     chmod -R u+w /app
 
-WORKDIR /app/server
+WORKDIR /app/data/server
 
 # COPY entrypoint script
 COPY entrypoint.sh /app/entrypoint.sh
+COPY config/config.json /app/defaults/config.json
 RUN chmod +x /app/entrypoint.sh
 
 # Health check - check if server process exists

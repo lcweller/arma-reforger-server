@@ -6,7 +6,7 @@ A custom Docker image for running an Arma Reforger dedicated server, built from 
 
 - **Custom Built**: Complete Dockerfile with Ubuntu 22.04 base and SteamCMD
 - **Automated Publishing**: GitHub Actions CI/CD for multi-platform builds
-- **Production Ready**: Health checks, signal handling, and proper user permissions
+- **Production Ready**: Health checks and signal handling
 - **Easy Configuration**: External config mounting for simple modifications
 - **Mod Support**: Volume mounting for Steam Workshop mods
 
@@ -24,13 +24,13 @@ A custom Docker image for running an Arma Reforger dedicated server, built from 
 git clone https://github.com/YOUR_USERNAME/arma-reforger-server.git
 cd arma-reforger-server
 
-# Create necessary directories
-mkdir -p config logs mods profiles
+# Create one data directory (container creates subfolders automatically)
+mkdir -p arma-reforger
 ```
 
 ### 2. Configure Server
 
-Edit `config/config.json`:
+Edit `arma-reforger/config/config.json` after first startup (the container auto-creates this file if missing):
 
 ```json
 {
@@ -45,9 +45,6 @@ Edit `config/config.json`:
 ### 3. Deploy
 
 ```bash
-# Update docker-compose.yml with your GitHub username
-# Replace YOUR_USERNAME with your actual GitHub username
-
 docker compose up -d
 docker compose logs -f
 ```
@@ -64,15 +61,6 @@ docker compose logs -f
 | `maxPlayers` | Player limit | 32 |
 | `gameType` | Game mode | "Conflict" |
 | `map` | Default map | "Everon" |
-
-### Environment Variables
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `APP_ID` | Steam App ID | 1874900 |
-| `BRANCH` | Steam branch | "--" (latest) |
-| `SERVER_DIR` | Server files location | /app/server |
-| `CONFIG_DIR` | Config files location | /app/config |
 
 ### Ports
 
@@ -106,7 +94,7 @@ docker build -t arma-reforger-local .
 
 # Run locally
 docker run -p 2001:2001/udp -p 17777:17777/udp -p 19999:19999/udp \
-  -v $(pwd)/config:/app/config \
+  -v $(pwd)/arma-reforger:/app/data \
   arma-reforger-local
 ```
 
@@ -131,12 +119,6 @@ netstat -tlnup | grep -E "(2001|17777|19999)"
 # Ensure ports are not in use by other services
 ```
 
-### Permission Issues
-```bash
-# On Linux hosts
-sudo chown -R 1000:1000 config/ logs/ mods/ profiles/
-```
-
 ### Mod Download Issues
 - Verify mod IDs are correct
 - Check Steam Workshop permissions
@@ -147,7 +129,7 @@ sudo chown -R 1000:1000 config/ logs/ mods/ profiles/
 - Change default admin password
 - Use strong passwords (20+ characters recommended)
 - Keep image updated with latest security patches
-- Run container as non-root user (already configured)
+- Limit host path access to appdata only
 
 ## Resource Requirements
 

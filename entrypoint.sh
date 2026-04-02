@@ -12,13 +12,14 @@ SERVER_DIR="${SERVER_DIR:-/app/data/server}"
 CONFIG_DIR="${CONFIG_DIR:-/app/data/config}"
 LOGS_DIR="${LOGS_DIR:-/app/data/logs}"
 APP_ID="1874900"
+DEFAULT_CONFIG_TEMPLATE="/app/defaults/config.json"
 
 log "Starting Arma Reforger Server setup..."
 
 # Ensure directories exist
-mkdir -p $SERVER_DIR
-mkdir -p $CONFIG_DIR
-mkdir -p $LOGS_DIR
+mkdir -p "$SERVER_DIR"
+mkdir -p "$CONFIG_DIR"
+mkdir -p "$LOGS_DIR"
 
 # Download/update server files via SteamCMD
 log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
@@ -39,13 +40,23 @@ fi
 
 log "Server files installed successfully"
 
-# Setup config.json if provided via volume
-if [ -f "$CONFIG_DIR/config.json" ]; then
-    log "Using provided config.json"
-    cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json"
-else
-    log "WARNING: No config.json found, using default"
+# Normalize and seed config.json for first-run simplicity.
+if [ -d "$CONFIG_DIR/config.json" ]; then
+    log "WARNING: $CONFIG_DIR/config.json is a directory; renaming it and creating a valid file"
+    mv "$CONFIG_DIR/config.json" "$CONFIG_DIR/config.json.dir.bak"
 fi
+
+if [ ! -f "$CONFIG_DIR/config.json" ]; then
+    if [ -f "$DEFAULT_CONFIG_TEMPLATE" ]; then
+        log "No config.json found; creating one from default template"
+        cp "$DEFAULT_CONFIG_TEMPLATE" "$CONFIG_DIR/config.json"
+    else
+        log "ERROR: Default config template missing at $DEFAULT_CONFIG_TEMPLATE"
+        exit 1
+    fi
+fi
+
+cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json"
 
 # Set proper permissions
 chmod +x "$SERVER_DIR/ArmaReforgerServer"
