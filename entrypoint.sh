@@ -42,18 +42,30 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     fi
 fi
 
-# Auto-fix legacy fields from older flat-structure templates (for backward compatibility with persisted configs)
+# Migrate legacy flat configs in persisted appdata to the current nested schema.
 if command -v jq >/dev/null 2>&1; then
-    # Remove any old flat-structure fields that shouldn't exist in new nested schema
-    LEGACY_FIELDS='["serverName", "serverDescription", "gameType", "map", "mission", "modsList", "autoSaveInterval", "passwordProtected", "playerPassword", "voiceChat", "battleEye", "spawnPoints", "fastBoot", "maxFps", "difficulty", "gamePort", "queryPort", "a2sQueryPort"]'
-    for field in $(echo "$LEGACY_FIELDS" | jq -r '.[]'); do
-        if jq -e ".$field" "$CONFIG_DIR/config.json" >/dev/null 2>&1; then
-            log "Removing legacy flat-structure field: $field"
-            TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
-            jq "del(.$field)" "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
-            mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
-        fi
-    done
+    if jq -e 'has("game") | not or has("adminPassword") or has("serverName") or has("serverDescription") or has("maxPlayers") or has("passwordProtected") or has("gameType") or has("map") or has("modsList")' "$CONFIG_DIR/config.json" >/dev/null 2>&1; then
+        log "Detected legacy flat config structure; migrating to nested schema"
+        LEGACY_BACKUP="$CONFIG_DIR/config.legacy.$(date +%Y%m%d-%H%M%S).json"
+        cp "$CONFIG_DIR/config.json" "$LEGACY_BACKUP"
+
+        TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
+        jq \
+            --slurpfile legacy "$CONFIG_DIR/config.json" \
+            '
+                .publicAddress = ($legacy[0].publicAddress // .publicAddress) |
+                .publicPort = ($legacy[0].publicPort // .publicPort) |
+                .game.name = ($legacy[0].serverName // .game.name) |
+                .game.password = (if ($legacy[0].passwordProtected // false) then ($legacy[0].playerPassword // .game.password) else .game.password end) |
+                .game.passwordAdmin = ($legacy[0].adminPassword // .game.passwordAdmin) |
+                .game.maxPlayers = ($legacy[0].maxPlayers // .game.maxPlayers) |
+                .game.mods = ($legacy[0].modsList // .game.mods) |
+                .game.gameProperties.disableThirdPerson = ($legacy[0].disableThirdPerson // .game.gameProperties.disableThirdPerson) |
+                .game.gameProperties.battlEye = ($legacy[0].battleEye // .game.gameProperties.battlEye)
+            ' "$DEFAULT_CONFIG_TEMPLATE" > "$TMP_CONFIG"
+        mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
+        log "Legacy config migrated and backup saved to $LEGACY_BACKUP"
+    fi
 fi
 
 cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json" 2>/dev/null || true
