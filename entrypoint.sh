@@ -41,13 +41,21 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     fi
 fi
 
-# Auto-fix known invalid placeholder values from older templates.
+# Auto-fix known invalid fields from older templates.
 if command -v jq >/dev/null 2>&1; then
     CURRENT_PUBLIC_ADDRESS="$(jq -r '.publicAddress // empty' "$CONFIG_DIR/config.json" 2>/dev/null || true)"
     if [ "$CURRENT_PUBLIC_ADDRESS" = "YOUR_PUBLIC_IP" ]; then
         log "Detected placeholder publicAddress; setting it to 'local' for valid default startup"
         TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
         jq '.publicAddress = "local"' "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
+        mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
+    fi
+    
+    # Remove invalid gamePort field if present (not allowed in schema)
+    if jq -e '.gamePort' "$CONFIG_DIR/config.json" >/dev/null 2>&1; then
+        log "Removing invalid gamePort field from config"
+        TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
+        jq 'del(.gamePort)' "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
         mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
     fi
 fi
