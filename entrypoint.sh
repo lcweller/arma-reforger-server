@@ -28,7 +28,7 @@ su steam -c "$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux \
                         +@sSteamCmdForcePlatformBitness 64 \
                         +force_install_dir $SERVER_DIR \
                         +login anonymous \
-                        +app_install $APP_ID validate \
+                        +app_update $APP_ID validate \
                         +quit"
 
 # Verify installation
