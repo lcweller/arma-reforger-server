@@ -1,143 +1,101 @@
-# Arma Reforger Dedicated Server Docker Image
+# Arma Reforger Dedicated Server On Unraid
 
-Production-focused Docker image for hosting an Arma Reforger dedicated server with persisted config/data, SteamCMD auto-install/update, and Unraid-friendly deployment.
-
-## What This Guide Covers
-
-This README is a full start-to-finish deployment guide for:
-
-1. Host prerequisites
-2. Router and firewall requirements
-3. Docker Compose deployment
-4. Unraid deployment
-5. Config file customization
-6. Validation and troubleshooting
-
-## Host Requirements
-
-Minimum recommended host resources:
-
-- 4 CPU cores
-- 6 GB RAM
-- 20 GB storage
-
-Recommended for smoother performance:
-
-- 8 CPU cores
-- 12 GB RAM
-- 50 GB SSD storage
-
-Software prerequisites:
-
-- Docker Engine
-- Docker Compose (or Unraid Docker UI)
-- Internet access to Steam content servers
-
-## Network and Router Requirements
-
-Arma Reforger needs inbound UDP traffic from the internet.
-
-Open and forward these ports from your router to your Docker host LAN IP:
-
-- UDP 2001 (game)
-- UDP 17777 (A2S/query)
-- UDP 19999 (RCON)
-
-Checklist:
-
-1. Reserve a static LAN IP for your Docker host (DHCP reservation is fine).
-2. Create UDP port forwards for 2001, 17777, and 19999 to that host IP.
-3. If host firewall is enabled, allow inbound UDP 2001/17777/19999.
-4. If your ISP uses CGNAT, public hosting may fail unless you use a public IP solution.
-5. Optional: use DDNS and set `publicAddress` to your DDNS hostname.
-
-## Repository Layout
-
-- [Dockerfile](Dockerfile)
-- [entrypoint.sh](entrypoint.sh)
-- [config/config.json](config/config.json)
-- [Arma-Reforger.yaml](Arma-Reforger.yaml)
-
-## Quick Deploy With Docker Compose
-
-### 1. Clone
-
-```bash
-git clone https://github.com/YOUR_USERNAME/arma-reforger-server.git
-cd arma-reforger-server
-```
-
-### 2. Create persistent appdata folder
-
-```bash
-mkdir -p arma-reforger
-```
-
-### 3. Start container
-
-```bash
-docker compose up -d
-```
-
-First startup can take several minutes. SteamCMD will download/verify server files (about 11 GB).
-
-### 4. Watch logs
-
-```bash
-docker compose logs -f arma-reforger
-```
-
-Healthy path looks like:
-
-- SteamCMD install/update completes
-- server process starts
-- container remains up and becomes healthy
-
-## Unraid Deployment (Recommended for This Image)
-
-### 1. Add container image
-
-Use image:
+This guide is only for Unraid users deploying this image:
 
 `ghcr.io/lcweller/arma-reforger-server:latest`
 
-### 2. Port mappings
+It includes every step from prerequisites to router setup, config edits, first boot validation, and common failure recovery.
 
-Map host to container exactly:
+## Important Port Mapping Clarification
 
-- 2001/udp -> 2001/udp
-- 17777/udp -> 17777/udp
-- 19999/udp -> 19999/udp
+You are correct: [Arma-Reforger.yaml](Arma-Reforger.yaml) already defines the container ports.
 
-### 3. Persistent path mapping
+What this means in Unraid:
 
-Map one host path to `/app/data`:
+1. Do not invent different container ports.
+2. Keep container ports fixed at `2001`, `17777`, and `19999` (UDP).
+3. In Unraid UI you are choosing host-side exposure. In normal setups, host and container ports should match.
 
-- Host path example: `/mnt/user/appdata/arma-reforger`
-- Container path: `/app/data`
+## 1. Unraid Prerequisites
 
-The container will use/create:
+Minimum:
 
-- `/app/data/config/config.json`
-- `/app/data/logs/steamcmd.log`
-- `/app/data/server/...`
+- 4 CPU cores
+- 6 GB RAM
+- 20 GB free disk
 
-### 4. Optional environment variable
+Recommended:
 
-You can pass extra startup args without rebuilding image:
+- 8 CPU cores
+- 12 GB RAM
+- 50 GB SSD cache/appdata storage
 
-- Name: `ADDITIONAL_STARTUP_ARGS`
-- Example value: `-listScenarios`
+Required:
 
-### 5. Start and verify
+1. Unraid Docker service enabled
+2. Internet access from Unraid to Steam
+3. A dedicated appdata folder path (example: `/mnt/user/appdata/arma-reforger`)
 
-Start the container and inspect logs in Unraid.
+## 2. Router and Firewall Requirements
 
-## config.json Reference
+Forward these UDP ports from your router to your Unraid server LAN IP:
 
-Use [config/config.json](config/config.json) as the base template.
+- `2001/udp` game traffic
+- `17777/udp` query/A2S
+- `19999/udp` RCON
 
-### Known-good baseline
+Checklist:
+
+1. Reserve/static DHCP your Unraid IP.
+2. Create UDP forwards for all three ports.
+3. If any upstream firewall exists, allow these UDP ports.
+4. If ISP uses CGNAT, public listing/connectivity may fail until you get a public inbound path.
+
+## 3. Create the Container in Unraid
+
+In Unraid Docker page:
+
+1. Click Add Container.
+2. Name it something like `Test5`.
+3. Set Image to `ghcr.io/lcweller/arma-reforger-server:latest`.
+4. Set Restart Policy to `unless-stopped`.
+
+Add one path mapping:
+
+1. Host Path: `/mnt/user/appdata/arma-reforger`
+2. Container Path: `/app/data`
+3. Access Mode: Read/Write
+
+Add port mappings (UDP):
+
+1. Host `2001` -> Container `2001` UDP
+2. Host `17777` -> Container `17777` UDP
+3. Host `19999` -> Container `19999` UDP
+
+Optional environment variable for debugging only:
+
+1. Key: `ADDITIONAL_STARTUP_ARGS`
+2. Value example: `-listScenarios`
+
+## 4. First Start Behavior (Expected)
+
+On first boot, the container will:
+
+1. Create directories under `/app/data`.
+2. Create `/app/data/config/config.json` if missing.
+3. Download or verify Arma Reforger dedicated server files through SteamCMD.
+
+This can take multiple minutes.
+
+Expected files after first start:
+
+- `/mnt/user/appdata/arma-reforger/config/config.json`
+- `/mnt/user/appdata/arma-reforger/logs/steamcmd.log`
+- `/mnt/user/appdata/arma-reforger/server/...`
+
+## 5. Edit config.json Correctly
+
+Use this nested schema model (do not use old flat keys like `adminPassword` at root):
 
 ```json
 {
@@ -181,32 +139,43 @@ Use [config/config.json](config/config.json) as the base template.
 }
 ```
 
-### What to change first
+Required edits before public use:
 
-Before public use, change these values:
+1. `publicAddress`: set your public IP or DDNS hostname.
+2. `rcon.password`: set a strong password.
+3. `game.passwordAdmin`: set a strong password.
+4. `game.name`: set your server name.
 
-1. `publicAddress`
-2. `rcon.password`
-3. `game.passwordAdmin`
-4. `game.name`
+Optional edits:
 
-Optional changes:
+1. `game.password` for private join password.
+2. `game.maxPlayers`.
+3. `game.scenarioId`.
+4. `game.mods`.
 
-1. `game.password` for private server access
-2. `game.maxPlayers`
-3. `game.scenarioId` to your desired mission
-4. `game.mods` list
+Critical validation rules:
 
-### Important schema notes
+1. Keep nested `game` object structure.
+2. `serverMinGrassDistance` must be `>= 50`.
+3. Keep defaults for ports while validating startup.
 
-- Use the nested `game` structure.
-- Do not use old flat fields such as `adminPassword`, `serverName`, `modsList`, `gameType`, or `map`.
-- `game.gameProperties.serverMinGrassDistance` must be at least `50`.
-- Keep default ports until server boots successfully.
+## 6. Restart and Validate on Unraid
 
-## Adding Mods
+After config edits:
 
-Add workshop mods under `game.mods`:
+1. Restart the container in Unraid.
+2. Watch logs.
+3. Confirm container remains `Up` and transitions to `healthy`.
+
+Validation checklist:
+
+1. No JSON schema errors in logs.
+2. No immediate shutdown after config load.
+3. External clients can reach server (after router forwards).
+
+## 7. Adding Mods
+
+Add mods to `game.mods` in the persisted config:
 
 ```json
 "mods": [
@@ -217,98 +186,56 @@ Add workshop mods under `game.mods`:
 ]
 ```
 
-Then restart container:
+Then restart the container.
 
-```bash
-docker compose restart arma-reforger
-```
+## 8. Recovery and Troubleshooting (Unraid)
 
-## Scenario Discovery
+### A) Config errors keep returning after image update
 
-If you need valid scenario IDs/paths, run one startup with `-listScenarios`.
+Cause: persisted config in appdata overrides image defaults.
 
-Docker example:
+Fix:
 
-```bash
-docker run --rm \
-  -e ADDITIONAL_STARTUP_ARGS="-listScenarios" \
-  -v $(pwd)/arma-reforger:/app/data \
-  ghcr.io/lcweller/arma-reforger-server:latest
-```
+1. Edit `/mnt/user/appdata/arma-reforger/config/config.json` directly.
+2. Restart container.
 
-In Unraid, set `ADDITIONAL_STARTUP_ARGS=-listScenarios` for one run and read container logs.
+### B) SteamCMD takes too long
 
-## Validate Your Deployment
-
-After startup, validate in this order:
-
-1. Container status is `Up` and eventually `healthy`.
-2. No JSON schema errors in logs.
-3. Server is visible/connectable from game clients.
-4. Router-forwarded ports are reachable from outside your LAN.
-
-Useful checks:
-
-```bash
-docker ps
-docker logs --tail 200 <container_name>
-```
-
-## Troubleshooting
-
-### Container exits with config schema errors
-
-Use the exact structure from [config/config.json](config/config.json). Most failures are caused by old field names or out-of-range values.
-
-### Server keeps reusing old broken config
-
-If you bind mount appdata, existing config persists across image updates. Edit the mounted file directly:
-
-- `/mnt/user/appdata/arma-reforger/config/config.json` on Unraid
-
-### SteamCMD phase looks stuck
-
-During first run, SteamCMD verify/download can take a while. Check:
+Check:
 
 - `/mnt/user/appdata/arma-reforger/logs/steamcmd.log`
 
-### Server starts then disappears from browser
+First run verify/download of ~11 GB can take time.
 
-Verify:
+### C) Container starts then server not visible publicly
 
-1. Port forwards are UDP, not TCP.
-2. Forwards target the correct host IP.
-3. `publicAddress` is correct for internet clients.
-4. ISP is not blocking/CGNAT-ing inbound traffic.
+Check in order:
 
-## Security Recommendations
+1. Router forwards are UDP and target Unraid IP.
+2. Host and container ports are 2001/17777/19999.
+3. `publicAddress` is correct.
+4. ISP is not behind CGNAT.
+
+### D) Need valid scenario list
+
+Temporarily set env var in Unraid container:
+
+- `ADDITIONAL_STARTUP_ARGS=-listScenarios`
+
+Start once, read logs, choose scenario, remove the env var, restart.
+
+## 9. Security Checklist
 
 1. Change all placeholder passwords.
-2. Use long random admin and RCON passwords.
-3. Keep host and image updated.
-4. Only expose required ports.
+2. Use unique long random admin and RCON secrets.
+3. Keep image updated.
+4. Expose only required UDP ports.
 
-## Build and Publish (Project Maintainers)
+## 10. Files in This Repository
 
-Build locally:
-
-```bash
-docker build -t arma-reforger-local .
-```
-
-Run locally:
-
-```bash
-docker run -p 2001:2001/udp -p 17777:17777/udp -p 19999:19999/udp \
-  -v $(pwd)/arma-reforger:/app/data \
-  arma-reforger-local
-```
-
-Push to GitHub and let Actions publish to GHCR:
-
-1. Push to `main`
-2. Wait for workflow completion
-3. Pull `ghcr.io/lcweller/arma-reforger-server:latest`
+- [config/config.json](config/config.json): known-good baseline template
+- [entrypoint.sh](entrypoint.sh): startup and legacy config migration logic
+- [Arma-Reforger.yaml](Arma-Reforger.yaml): reference compose configuration with the same port set used in this guide
 
 ## License
 
