@@ -21,26 +21,11 @@ mkdir -p "$SERVER_DIR"
 mkdir -p "$CONFIG_DIR"
 mkdir -p "$LOGS_DIR"
 
-# Download/update server files via SteamCMD
-log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
-log "Using platform: linux"
+# Ensure steam user can write to bind-mounted appdata paths.
+chown -R steam:steam "$SERVER_DIR" "$CONFIG_DIR" "$LOGS_DIR" 2>/dev/null || true
+chmod -R ug+rwX "$SERVER_DIR" "$CONFIG_DIR" "$LOGS_DIR" 2>/dev/null || true
 
-su steam -c "$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux \
-                        +@sSteamCmdForcePlatformBitness 64 \
-                        +force_install_dir $SERVER_DIR \
-                        +login anonymous \
-                        +app_update $APP_ID validate \
-                        +quit"
-
-# Verify installation
-if [ ! -f "$SERVER_DIR/ArmaReforgerServer" ]; then
-    log "ERROR: Server executable not found at $SERVER_DIR/ArmaReforgerServer"
-    exit 1
-fi
-
-log "Server files installed successfully"
-
-# Normalize and seed config.json for first-run simplicity.
+# Normalize and seed config.json before download so users always get a file in appdata.
 if [ -d "$CONFIG_DIR/config.json" ]; then
     log "WARNING: $CONFIG_DIR/config.json is a directory; renaming it and creating a valid file"
     mv "$CONFIG_DIR/config.json" "$CONFIG_DIR/config.json.dir.bak"
@@ -57,6 +42,55 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
 fi
 
 cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json"
+
+# Download/update server files via SteamCMD.
+log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
+
+install_with_steamcmd() {
+    local mode="$1"
+    local cmd
+
+    case "$mode" in
+        plain)
+            cmd="$STEAM_DIR/steamcmd.sh +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID validate +quit"
+            ;;
+        linux)
+            cmd="$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID validate +quit"
+            ;;
+        linux64)
+            cmd="$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux +@sSteamCmdForcePlatformBitness 64 +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID validate +quit"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    log "SteamCMD attempt: $mode"
+    set +e
+    su steam -c "$cmd" >> "$LOGS_DIR/steamcmd.log" 2>&1
+    local rc=$?
+    set -e
+    return $rc
+}
+
+if ! install_with_steamcmd plain; then
+    log "SteamCMD plain attempt failed; trying linux platform"
+    if ! install_with_steamcmd linux; then
+        log "SteamCMD linux attempt failed; trying linux 64-bit"
+        if ! install_with_steamcmd linux64; then
+            log "ERROR: All SteamCMD install attempts failed. See $LOGS_DIR/steamcmd.log"
+            exit 1
+        fi
+    fi
+fi
+
+# Verify installation
+if [ ! -f "$SERVER_DIR/ArmaReforgerServer" ]; then
+    log "ERROR: Server executable not found at $SERVER_DIR/ArmaReforgerServer"
+    exit 1
+fi
+
+log "Server files installed successfully"
 
 # Set proper permissions
 chmod +x "$SERVER_DIR/ArmaReforgerServer"
