@@ -1,7 +1,7 @@
 {
   "bindAddress": "0.0.0.0",
   "bindPort": 2001,
-  "publicAddress": "YOUR_PUBLIC_IP",
+  "publicAddress": "local",
   "publicPort": 2001,
   "gamePort": 2001,
   "queryPort": 19999,

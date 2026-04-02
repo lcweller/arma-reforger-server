@@ -41,6 +41,17 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     fi
 fi
 
+# Auto-fix known invalid placeholder values from older templates.
+if command -v jq >/dev/null 2>&1; then
+    CURRENT_PUBLIC_ADDRESS="$(jq -r '.publicAddress // empty' "$CONFIG_DIR/config.json" 2>/dev/null || true)"
+    if [ "$CURRENT_PUBLIC_ADDRESS" = "YOUR_PUBLIC_IP" ]; then
+        log "Detected placeholder publicAddress; setting it to 'local' for valid default startup"
+        TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
+        jq '.publicAddress = "local"' "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
+        mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
+    fi
+fi
+
 cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json" 2>/dev/null || true
 
 # Download/update server files via SteamCMD.
