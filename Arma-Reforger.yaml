@@ -6,11 +6,6 @@ services:
     container_name: arma-reforger-server
     restart: unless-stopped
 
-    environment:
-      SERVER_DIR: /app/data/server
-      CONFIG_DIR: /app/data/config
-      APP_ID: 1874900
-
     volumes:
       - ./arma-reforger:/app/data
 

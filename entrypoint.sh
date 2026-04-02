@@ -11,7 +11,7 @@ STEAM_DIR="${STEAM_DIR:-/home/steam/steamcmd}"
 SERVER_DIR="${SERVER_DIR:-/app/data/server}"
 CONFIG_DIR="${CONFIG_DIR:-/app/data/config}"
 LOGS_DIR="${LOGS_DIR:-/app/data/logs}"
-APP_ID="${APP_ID:-1874900}"
+APP_ID="1874900"
 
 log "Starting Arma Reforger Server setup..."
 
