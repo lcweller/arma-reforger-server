@@ -8,24 +8,28 @@ log() {
 
 # Load environment or use defaults
 STEAM_DIR="${STEAM_DIR:-/home/steam/steamcmd}"
-SERVER_DIR="${SERVER_DIR:-/app/server}"
-CONFIG_DIR="${CONFIG_DIR:-/app/config}"
+SERVER_DIR="${SERVER_DIR:-/app/data/server}"
+CONFIG_DIR="${CONFIG_DIR:-/app/data/config}"
+LOGS_DIR="${LOGS_DIR:-/app/data/logs}"
 APP_ID="${APP_ID:-1874900}"
-BRANCH="${BRANCH:---}"
-STEAM_USERNAME="${STEAM_USERNAME:-anonymous}"
-STEAM_PASSWORD="${STEAM_PASSWORD:-}"
 
 log "Starting Arma Reforger Server setup..."
+
+# Ensure directories exist
+mkdir -p $SERVER_DIR
+mkdir -p $CONFIG_DIR
+mkdir -p $LOGS_DIR
 
 # Download/update server files via SteamCMD
 log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
 log "Using platform: linux"
 
-$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux \
+su steam -c "$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux \
+                        +@sSteamCmdForcePlatformBitness 64 \
                         +force_install_dir $SERVER_DIR \
-                        +login $STEAM_USERNAME $STEAM_PASSWORD \
-                        +app_update $APP_ID $BRANCH validate \
-                        +quit
+                        +login anonymous \
+                        +app_install $APP_ID validate \
+                        +quit"
 
 # Verify installation
 if [ ! -f "$SERVER_DIR/ArmaReforgerServer" ]; then

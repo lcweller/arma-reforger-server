@@ -41,18 +41,17 @@ RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.t
     chmod -R u+w . && \
     chown -R steam:steam /home/steam/steamcmd
 
-# Create server directory with proper permissions for steam user
+# Create server directory with proper permissions
 RUN mkdir -p /app/server && \
     mkdir -p /app/config && \
     mkdir -p /app/logs && \
-    chown -R steam:steam /app && \
     chmod -R 755 /app && \
     chmod -R u+w /app
 
 WORKDIR /app/server
 
 # COPY entrypoint script
-COPY --chown=steam:steam entrypoint.sh /app/entrypoint.sh
+COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Health check - check if server process exists
@@ -61,7 +60,5 @@ HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
 
 # Expose ports
 EXPOSE 2001/udp 17777/udp 19999/udp
-
-USER steam
 
 ENTRYPOINT ["/app/entrypoint.sh"]
