@@ -41,7 +41,7 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     fi
 fi
 
-cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json"
+cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json" 2>/dev/null || true
 
 # Download/update server files via SteamCMD.
 log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
@@ -92,6 +92,14 @@ fi
 
 log "Server files installed successfully"
 
+# Re-assert config after update in case SteamCMD touched install directory.
+if [ ! -f "$CONFIG_DIR/config.json" ]; then
+    log "ERROR: Config missing at $CONFIG_DIR/config.json after install"
+    exit 1
+fi
+
+cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json" 2>/dev/null || true
+
 # Set proper permissions
 chmod +x "$SERVER_DIR/ArmaReforgerServer"
 
@@ -100,7 +108,7 @@ log "Starting Arma Reforger Server..."
 trap 'log "Shutting down..."; kill -TERM $SERVER_PID 2>/dev/null || true; exit 0' SIGTERM SIGINT
 
 cd "$SERVER_DIR"
-./ArmaReforgerServer -config config.json 2>&1 &
+./ArmaReforgerServer -config "$CONFIG_DIR/config.json" 2>&1 &
 SERVER_PID=$!
 
 log "Server PID: $SERVER_PID"
