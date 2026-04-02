@@ -51,13 +51,16 @@ if command -v jq >/dev/null 2>&1; then
         mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
     fi
     
-    # Remove invalid gamePort field if present (not allowed in schema)
-    if jq -e '.gamePort' "$CONFIG_DIR/config.json" >/dev/null 2>&1; then
-        log "Removing invalid gamePort field from config"
-        TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
-        jq 'del(.gamePort)' "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
-        mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
-    fi
+    # Remove invalid fields that are not allowed in schema (gamePort, queryPort, a2sQueryPort)
+    INVALID_FIELDS='["gamePort", "queryPort", "a2sQueryPort"]'
+    for field in $(echo "$INVALID_FIELDS" | jq -r '.[]'); do
+        if jq -e ".$field" "$CONFIG_DIR/config.json" >/dev/null 2>&1; then
+            log "Removing invalid $field field from config"
+            TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
+            jq "del(.$field)" "$CONFIG_DIR/config.json" > "$TMP_CONFIG"
+            mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
+        fi
+    done
 fi
 
 cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json" 2>/dev/null || true

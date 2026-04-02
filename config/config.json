@@ -3,8 +3,6 @@
   "bindPort": 2001,
   "publicAddress": "local",
   "publicPort": 2001,
-  "queryPort": 19999,
-  "a2sQueryPort": 17777,
   "serverName": "My Arma Reforger Server",
   "serverDescription": "Community dedicated server",
   "adminPassword": "CHANGE_ME_STRONG_PASSWORD",
