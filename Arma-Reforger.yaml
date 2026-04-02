@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  arma-reforger:
+    image: ghcr.io/YOUR_USERNAME/arma-reforger-server:latest
+    container_name: arma-reforger-server
+    restart: unless-stopped
+
+    environment:
+      SERVER_DIR: /app/server
+      CONFIG_DIR: /app/config
+      APP_ID: 1874900
+      BRANCH: "--"  # Use "--" for latest, or specify branch like "beta"
+
+    ports:
+      - "2001:2001/udp"
+      - "17777:17777/udp"
+      - "19999:19999/udp"
+
+    volumes:
+      - ./config:/app/config
+      - server_data:/app/server
+      - server_logs:/app/logs
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+volumes:
+  server_data:
+    driver: local
+  server_logs:
+    driver: local
