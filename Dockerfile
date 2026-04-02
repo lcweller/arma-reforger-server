@@ -4,19 +4,22 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV STEAM_APPID=1874900
 
-# Install dependencies
+# Enable 32-bit architecture support for SteamCMD
+RUN dpkg --add-architecture i386
+
+# Install dependencies including 32-bit libraries for SteamCMD
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
         wget \
         libstdc++6 \
-        libxss1 \
-        libglib2.0-0 \
-        libsm6 \
-        libxrender1 \
-        libfontconfig1 \
-        libxext6 \
+        libstdc++6:i386 \
+        libgl1:i386 \
+        libc6:i386 \
+        libxext6:i386 \
+        libx11-6:i386 \
+        libglib2.0-0:i386 \
         net-tools \
         procps \
         htop \
