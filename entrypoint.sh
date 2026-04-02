@@ -17,7 +17,10 @@ log "Starting Arma Reforger Server setup..."
 
 # Download/update server files via SteamCMD
 log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
-$STEAM_DIR/steamcmd.sh +force_install_dir $SERVER_DIR \
+log "Using platform: linux"
+
+$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux \
+                        +force_install_dir $SERVER_DIR \
                         +login anonymous \
                         +app_update $APP_ID $BRANCH validate \
                         +quit
