@@ -6,6 +6,11 @@ services:
     container_name: arma-reforger-server
     restart: unless-stopped
 
+    ports:
+      - "2001:2001/udp"
+      - "17777:17777/udp"
+      - "19999:19999/udp"
+
     volumes:
       - ./arma-reforger:/app/data
 
