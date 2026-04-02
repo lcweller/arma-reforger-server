@@ -12,6 +12,8 @@ SERVER_DIR="${SERVER_DIR:-/app/server}"
 CONFIG_DIR="${CONFIG_DIR:-/app/config}"
 APP_ID="${APP_ID:-1874900}"
 BRANCH="${BRANCH:---}"
+STEAM_USERNAME="${STEAM_USERNAME:-anonymous}"
+STEAM_PASSWORD="${STEAM_PASSWORD:-}"
 
 log "Starting Arma Reforger Server setup..."
 
@@ -21,7 +23,7 @@ log "Using platform: linux"
 
 $STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux \
                         +force_install_dir $SERVER_DIR \
-                        +login anonymous \
+                        +login $STEAM_USERNAME $STEAM_PASSWORD \
                         +app_update $APP_ID $BRANCH validate \
                         +quit
 
