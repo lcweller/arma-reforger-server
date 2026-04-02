@@ -62,9 +62,6 @@ install_with_steamcmd() {
     local cmd
 
     case "$mode" in
-        plain)
-            cmd="$STEAM_DIR/steamcmd.sh +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID validate +quit"
-            ;;
         linux)
             cmd="$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID validate +quit"
             ;;
@@ -84,16 +81,13 @@ install_with_steamcmd() {
     return $rc
 }
 
-if ! install_with_steamcmd plain; then
-    log "SteamCMD plain attempt failed; trying linux platform"
-    if ! install_with_steamcmd linux; then
-        log "SteamCMD linux attempt failed; trying linux 64-bit"
-        if ! install_with_steamcmd linux64; then
-            log "ERROR: All SteamCMD install attempts failed. See $LOGS_DIR/steamcmd.log"
-            exit 1
-        fi
+if ! install_with_steamcmd linux; then
+    log "SteamCMD linux attempt failed; trying linux 64-bit"
+    if ! install_with_steamcmd linux64; then
+        log "ERROR: All SteamCMD install attempts failed. See $LOGS_DIR/steamcmd.log"
+        exit 1
     fi
-fi
+    fi
 
 # Verify installation
 if [ ! -f "$SERVER_DIR/ArmaReforgerServer" ]; then
