@@ -1,27 +1,27 @@
 {
-	"bindAddress": "0.0.0.0",
-	"bindPort": 2001,
+	"bindAddress": "",
+	"bindPort": 0,
 	"publicAddress": "",
-	"publicPort": 2001,
+	"publicPort": 0,
 	"a2s": {
-		"address": "0.0.0.0",
-		"port": 17777
+		"address": "",
+		"port": 0
 	},
 	"rcon": {
-		"address": "0.0.0.0",
-		"port": 19999,
-		"password": "CHANGE_ME_STRONG_RCON_PASSWORD",
+		"address": "",
+		"port": 0,
+		"password": "",
 		"permission": "monitor",
 		"blacklist": [],
 		"whitelist": []
 	},
 	"game": {
-		"name": "My Arma Reforger Server",
+		"name": "",
 		"password": "",
-		"passwordAdmin": "CHANGE_ME_STRONG_ADMIN_PASSWORD",
-		"admins": [],
+		"passwordAdmin": "",
+		"admins" : [],
 		"scenarioId": "",
-		"maxPlayers": 32,
+		"maxPlayers": 0,
 		"visible": true,
 		"gameProperties": {
 			"serverMaxViewDistance": 1600,
