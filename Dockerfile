@@ -32,8 +32,9 @@ RUN useradd -m -u 1000 steam && \
 
 WORKDIR /home/steam/steamcmd
 
-# Download SteamCMD
-RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar xvz
+# Download SteamCMD and set executable permissions
+RUN curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar xvz && \
+    chmod +x steamcmd.sh
 
 # Create server directory
 RUN mkdir -p /app/server && \
