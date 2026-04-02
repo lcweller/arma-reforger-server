@@ -1,27 +1,27 @@
 {
-	"bindAddress": "",
-	"bindPort": 0,
+	"bindAddress": "0.0.0.0",
+	"bindPort": 2001,
 	"publicAddress": "",
-	"publicPort": 0,
+	"publicPort": 2001,
 	"a2s": {
-		"address": "",
-		"port": 0
+		"address": "0.0.0.0",
+		"port": 17777
 	},
 	"rcon": {
-		"address": "",
-		"port": 0,
-		"password": "",
+		"address": "0.0.0.0",
+		"port": 19999,
+		"password": "CHANGE_ME_STRONG_RCON_PASSWORD",
 		"permission": "monitor",
 		"blacklist": [],
 		"whitelist": []
 	},
 	"game": {
-		"name": "",
+		"name": "My Arma Reforger Server",
 		"password": "",
-		"passwordAdmin": "",
-		"admins" : [],
-		"scenarioId": "",
-		"maxPlayers": 0,
+		"passwordAdmin": "CHANGE_ME_STRONG_ADMIN_PASSWORD",
+		"admins": [],
+		"scenarioId": "{3F2E005F43DBD2F8}Missions/CAH_Briars_Coast.conf",
+		"maxPlayers": 32,
 		"visible": true,
 		"gameProperties": {
 			"serverMaxViewDistance": 1600,

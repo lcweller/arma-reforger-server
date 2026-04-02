@@ -11,6 +11,7 @@ STEAM_DIR="${STEAM_DIR:-/home/steam/steamcmd}"
 SERVER_DIR="${SERVER_DIR:-/app/data/server}"
 CONFIG_DIR="${CONFIG_DIR:-/app/data/config}"
 LOGS_DIR="${LOGS_DIR:-/app/data/logs}"
+ADDITIONAL_STARTUP_ARGS="${ADDITIONAL_STARTUP_ARGS:-}"
 APP_ID="1874900"
 DEFAULT_CONFIG_TEMPLATE="/app/defaults/config.json"
 
@@ -116,7 +117,16 @@ log "Starting Arma Reforger Server..."
 trap 'log "Shutting down..."; kill -TERM $SERVER_PID 2>/dev/null || true; exit 0' SIGTERM SIGINT
 
 cd "$SERVER_DIR"
-./ArmaReforgerServer -config "$CONFIG_DIR/config.json" 2>&1 &
+SERVER_CMD=(./ArmaReforgerServer -config "$CONFIG_DIR/config.json")
+
+if [ -n "$ADDITIONAL_STARTUP_ARGS" ]; then
+    # shellcheck disable=SC2206
+    EXTRA_ARGS=($ADDITIONAL_STARTUP_ARGS)
+    SERVER_CMD+=("${EXTRA_ARGS[@]}")
+fi
+
+log "Launch command: ${SERVER_CMD[*]}"
+"${SERVER_CMD[@]}" 2>&1 &
 SERVER_PID=$!
 
 log "Server PID: $SERVER_PID"
