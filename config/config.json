@@ -20,9 +20,24 @@
 		"password": "",
 		"passwordAdmin": "CHANGE_ME_STRONG_ADMIN_PASSWORD",
 		"admins": [],
-		// Scenario presets: uncomment one scenarioId line below to switch scenario.
+		// Scenario presets (official listScenarios output): uncomment one scenarioId line below to switch.
 		"scenarioId": "{3F2E005F43DBD2F8}Missions/CAH_Briars_Coast.conf",
 		// "scenarioId": "{ECC61978EDCC2B5A}Missions/23_Campaign.conf",
+		// "scenarioId": "{002AF7323E0129AF}Missions/Tutorial.conf",
+		// "scenarioId": "{59AD59368755F41A}Missions/21_GM_Eden.conf",
+		// "scenarioId": "{2BBBE828037C6F4B}Missions/22_GM_Arland.conf",
+		// "scenarioId": "{F45C6C15D31252E6}Missions/27_GM_Cain.conf",
+		// "scenarioId": "{C700DB41F0C546E1}Missions/23_Campaign_NorthCentral.conf",
+		// "scenarioId": "{28802845ADA64D52}Missions/23_Campaign_SWCoast.conf",
+		// "scenarioId": "{94992A3D7CE4FF8A}Missions/23_Campaign_Western.conf",
+		// "scenarioId": "{FDE33AFE2ED7875B}Missions/23_Campaign_Montignac.conf",
+		// "scenarioId": "{DAA03C6E6099D50F}Missions/24_CombatOps.conf",
+		// "scenarioId": "{C41618FD18E9D714}Missions/23_Campaign_Arland.conf",
+		// "scenarioId": "{DFAC5FABD11F2390}Missions/26_CombatOpsEveron.conf",
+		// "scenarioId": "{F1A1BEA67132113E}Missions/CAH_Castle.conf",
+		// "scenarioId": "{589945FB9FA7B97D}Missions/CAH_Concrete_Plant.conf",
+		// "scenarioId": "{9405201CBD22A30C}Missions/CAH_Factory.conf",
+		// "scenarioId": "{1CD06B409C6FAE56}Missions/CAH_Forest.conf",
 		"maxPlayers": 32,
 		"visible": true,
 		"gameProperties": {
@@ -37,10 +52,14 @@
 			"VONCanTransmitCrossFaction": false
 		},
 		"mods": [
-			// Mod presets: remove // on one or more blocks to auto-download/apply on restart.
+			// Mod presets: remove // on one or more full blocks to auto-download/apply on restart.
 			// {
 			// 	"modId": "5965550F24A0C152",
 			// 	"name": "Where Am I"
+			// }
+			// ,{
+			// 	"modId": "REPLACE_WITH_WORKSHOP_MOD_ID",
+			// 	"name": "Replace With Mod Name"
 			// }
 		]
 	}
