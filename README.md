@@ -122,7 +122,27 @@ To enable mods:
 
 Add mods under `game.mods` in config, then restart.
 
-## Step 9: If Something Fails
+## Step 9: Performance Startup Options (Optional)
+
+Set these environment variables in Unraid container settings when needed:
+
+1. `AUTO_UPDATE=true` (default): checks/downloads server updates on start.
+2. `VALIDATE_ON_UPDATE=false` (default): skips full Steam validation for faster boots.
+3. `CHOWN_ON_START=false` (default): avoids expensive recursive ownership scan on large appdata folders.
+
+Recommended for fastest normal restarts:
+
+1. `AUTO_UPDATE=true`
+2. `VALIDATE_ON_UPDATE=false`
+3. `CHOWN_ON_START=false`
+
+Recommended for periodic integrity maintenance (manual maintenance restart):
+
+1. Temporarily set `VALIDATE_ON_UPDATE=true`
+2. Restart once
+3. Set it back to `false`
+
+## Step 10: If Something Fails
 
 1. Check `/mnt/user/appdata/arma-reforger/logs/steamcmd.log`.
 2. Check container logs for JSON schema errors.

@@ -12,7 +12,6 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
-        wget \
         libstdc++6 \
         libstdc++6:i386 \
         libgl1:i386 \
@@ -20,11 +19,9 @@ RUN apt-get update && \
         libxext6:i386 \
         libx11-6:i386 \
         libglib2.0-0:i386 \
-        net-tools \
         procps \
-        htop \
-        nano \
-        jq && \
+        jq \
+        gosu && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -56,9 +53,9 @@ COPY entrypoint.sh /app/entrypoint.sh
 COPY config/config.json /app/defaults/config.json
 RUN chmod +x /app/entrypoint.sh
 
-# Health check - check if server process exists
-HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=3 \
-    CMD ps aux | grep -q "[A]rmaReforgerServer" || exit 1
+# Health check - ensure the managed runtime-config process is present.
+HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=5 \
+    CMD pgrep -f "ArmaReforgerServer -config /app/data/config/config.runtime.json" >/dev/null || exit 1
 
 # Expose ports
 EXPOSE 2001/udp 17777/udp 19999/udp

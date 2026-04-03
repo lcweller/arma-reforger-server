@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -Eeuo pipefail
 
 # Logging
 log() {
@@ -12,13 +12,58 @@ SERVER_DIR="${SERVER_DIR:-/app/data/server}"
 CONFIG_DIR="${CONFIG_DIR:-/app/data/config}"
 LOGS_DIR="${LOGS_DIR:-/app/data/logs}"
 ADDITIONAL_STARTUP_ARGS="${ADDITIONAL_STARTUP_ARGS:-}"
+AUTO_UPDATE="${AUTO_UPDATE:-true}"
+VALIDATE_ON_UPDATE="${VALIDATE_ON_UPDATE:-false}"
+CHOWN_ON_START="${CHOWN_ON_START:-false}"
 APP_ID="1874900"
 DEFAULT_CONFIG_TEMPLATE="/app/defaults/config.json"
 RUNTIME_CONFIG="$CONFIG_DIR/config.runtime.json"
 
+on_error() {
+    local exit_code="$1"
+    local line_no="$2"
+    log "ERROR: Startup failed at line $line_no (exit code: $exit_code)"
+    exit "$exit_code"
+}
+
+trap 'on_error $? $LINENO' ERR
+
 build_runtime_config() {
     # Support full-line JSONC comments in config.json so users can toggle presets.
-    sed -E '/^[[:space:]]*\/\//d' "$CONFIG_DIR/config.json" > "$RUNTIME_CONFIG"
+    awk '!/^[[:space:]]*\/\//' "$CONFIG_DIR/config.json" > "$RUNTIME_CONFIG"
+}
+
+bool_is_true() {
+    case "${1,,}" in
+        1|true|yes|on) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+run_as_steam() {
+    if command -v gosu >/dev/null 2>&1; then
+        gosu steam "$@"
+    else
+        su steam -s /bin/bash -c "$*"
+    fi
+}
+
+run_steamcmd_update() {
+    local validate_arg=""
+    local cmd
+
+    if bool_is_true "$VALIDATE_ON_UPDATE"; then
+        validate_arg=" validate"
+    fi
+
+    cmd="$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux +@sSteamCmdForcePlatformBitness 64 +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID$validate_arg +quit"
+
+    log "Running SteamCMD update (validate: $VALIDATE_ON_UPDATE)"
+    set +e
+    run_as_steam /bin/bash -lc "$cmd" >> "$LOGS_DIR/steamcmd.log" 2>&1
+    local rc=$?
+    set -e
+    return "$rc"
 }
 
 log "Starting Arma Reforger Server setup..."
@@ -29,7 +74,10 @@ mkdir -p "$CONFIG_DIR"
 mkdir -p "$LOGS_DIR"
 
 # Ensure steam user can write to bind-mounted appdata paths.
-chown -R steam:steam "$SERVER_DIR" "$CONFIG_DIR" "$LOGS_DIR" 2>/dev/null || true
+# Recursive chown is expensive on large server dirs, so keep it optional.
+if bool_is_true "$CHOWN_ON_START"; then
+    chown -R steam:steam "$SERVER_DIR" "$CONFIG_DIR" "$LOGS_DIR" 2>/dev/null || true
+fi
 chmod -R ug+rwX "$SERVER_DIR" "$CONFIG_DIR" "$LOGS_DIR" 2>/dev/null || true
 
 # Normalize and seed config.json before download so users always get a file in appdata.
@@ -86,42 +134,16 @@ if command -v jq >/dev/null 2>&1; then
     fi
 fi
 
-cp "$RUNTIME_CONFIG" "$SERVER_DIR/config.json" 2>/dev/null || true
-
 # Download/update server files via SteamCMD.
-log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
-
-install_with_steamcmd() {
-    local mode="$1"
-    local cmd
-
-    case "$mode" in
-        linux)
-            cmd="$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID validate +quit"
-            ;;
-        linux64)
-            cmd="$STEAM_DIR/steamcmd.sh +@sSteamCmdForcePlatformType linux +@sSteamCmdForcePlatformBitness 64 +force_install_dir $SERVER_DIR +login anonymous +app_update $APP_ID validate +quit"
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-
-    log "SteamCMD attempt: $mode"
-    set +e
-    su steam -c "$cmd" >> "$LOGS_DIR/steamcmd.log" 2>&1
-    local rc=$?
-    set -e
-    return $rc
-}
-
-if ! install_with_steamcmd linux; then
-    log "SteamCMD linux attempt failed; trying linux 64-bit"
-    if ! install_with_steamcmd linux64; then
-        log "ERROR: All SteamCMD install attempts failed. See $LOGS_DIR/steamcmd.log"
+if [ -x "$SERVER_DIR/ArmaReforgerServer" ] && ! bool_is_true "$AUTO_UPDATE"; then
+    log "AUTO_UPDATE is disabled and server executable exists; skipping SteamCMD update"
+else
+    log "Updating server files via SteamCMD (App ID: $APP_ID)..."
+    if ! run_steamcmd_update; then
+        log "ERROR: SteamCMD update failed. See $LOGS_DIR/steamcmd.log"
         exit 1
     fi
-    fi
+fi
 
 # Verify installation
 if [ ! -f "$SERVER_DIR/ArmaReforgerServer" ]; then
@@ -145,15 +167,11 @@ if ! jq empty "$RUNTIME_CONFIG" >/dev/null 2>&1; then
     exit 1
 fi
 
-cp "$RUNTIME_CONFIG" "$SERVER_DIR/config.json" 2>/dev/null || true
-
 # Set proper permissions
 chmod +x "$SERVER_DIR/ArmaReforgerServer"
 
-# Start server with signal handling
+# Start server as PID 1 for clean signal handling.
 log "Starting Arma Reforger Server..."
-trap 'log "Shutting down..."; kill -TERM $SERVER_PID 2>/dev/null || true; exit 0' SIGTERM SIGINT
-
 cd "$SERVER_DIR"
 SERVER_CMD=(./ArmaReforgerServer -config "$RUNTIME_CONFIG")
 
@@ -164,10 +182,4 @@ if [ -n "$ADDITIONAL_STARTUP_ARGS" ]; then
 fi
 
 log "Launch command: ${SERVER_CMD[*]}"
-"${SERVER_CMD[@]}" 2>&1 &
-SERVER_PID=$!
-
-log "Server PID: $SERVER_PID"
-wait $SERVER_PID 2>/dev/null || true
-
-log "Server stopped"
+exec "${SERVER_CMD[@]}"
