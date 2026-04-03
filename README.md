@@ -24,11 +24,8 @@ Forward these UDP ports to the Unraid server LAN IP:
 4. Set `Repository` to `ghcr.io/lcweller/arma-reforger-server:latest`.
 5. Set `Network Type` to `bridge`.
 6. Add path mapping: Host `/mnt/user/appdata/arma-reforger` -> Container `/app/data` (Read/Write).
-7. Add UDP ports:
-8. Host `2001` -> Container `2001`.
-9. Host `17777` -> Container `17777`.
-10. Host `19999` -> Container `19999`.
-11. Click Apply.
+7. Leave template-provided port entries unchanged.
+8. Click Apply.
 
 ## Step 4: Wait For First Boot
 
