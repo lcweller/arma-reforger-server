@@ -1,52 +1,43 @@
-# Arma Reforger Server On Unraid: Step-By-Step
+# Arma Reforger On Unraid: Exact Deployment Steps
 
-This is a direct installation checklist. Follow each step in order.
+This guide uses one deployment method only: the stack file [Arma-Reforger.yaml](Arma-Reforger.yaml).
+
+Users do not manually define container ports in this guide. Ports come from the YAML file.
 
 ## Step 1: Prepare Unraid
 
-1. Ensure Docker is enabled in Unraid.
-2. Create appdata folder: `/mnt/user/appdata/arma-reforger`.
-3. Confirm Unraid has internet access.
+1. Enable Docker in Unraid.
+2. Ensure internet access from Unraid.
+3. Ensure this path exists: `/mnt/user/appdata/arma-reforger`.
 
 ## Step 2: Configure Router
 
-Forward these UDP ports to your Unraid server LAN IP:
+Forward these UDP ports to the Unraid server LAN IP:
 
 1. `2001/udp`
 2. `17777/udp`
 3. `19999/udp`
 
-## Step 3: Add Container In Unraid
+## Step 3: Deploy The Stack From YAML
 
-In Unraid Docker page, click Add Container and set:
+1. Open Unraid Compose Manager (or Docker Compose plugin used on your Unraid setup).
+2. Create a new stack named `arma-reforger`.
+3. Paste the contents of [Arma-Reforger.yaml](Arma-Reforger.yaml) into the stack editor.
+4. Save and deploy the stack.
 
-1. `Name`: `arma-reforger`
-2. `Repository`: `ghcr.io/lcweller/arma-reforger-server:latest`
-3. `Network Type`: `bridge`
-4. `Restart Policy`: `unless-stopped`
-5. `Privileged`: `off`
+The YAML already defines:
 
-Add path:
-
-1. `Host Path`: `/mnt/user/appdata/arma-reforger`
-2. `Container Path`: `/app/data`
-3. `Access Mode`: `Read/Write`
-
-Set ports (UDP):
-
-1. Host `2001` -> Container `2001`
-2. Host `17777` -> Container `17777`
-3. Host `19999` -> Container `19999`
-
-Click Apply to create/start the container.
+1. Image: `ghcr.io/lcweller/arma-reforger-server:latest`
+2. Port mappings
+3. Volume mapping to `/app/data`
 
 ## Step 4: Wait For First Boot
 
 1. Open container logs.
 2. Wait for SteamCMD download/verify to finish.
-3. Wait until container status is `healthy`.
+3. Wait for container status to become `healthy`.
 
-First start can take several minutes.
+First boot may take several minutes.
 
 ## Step 5: Edit Server Config
 
@@ -60,7 +51,7 @@ Use this structure:
 {
   "bindAddress": "0.0.0.0",
   "bindPort": 2001,
-  "publicAddress": "local",
+  "publicAddress": "",
   "publicPort": 2001,
   "a2s": {
     "address": "0.0.0.0",
@@ -98,60 +89,34 @@ Use this structure:
 }
 ```
 
-Change these values before public use:
+Change these values:
 
-1. `publicAddress` to public IP or DDNS
+1. `publicAddress`
 2. `rcon.password`
 3. `game.passwordAdmin`
 4. `game.name`
 
-## Step 6: Restart Container
+## Step 6: Restart
 
-1. Restart container in Unraid.
-2. Open logs.
-3. Confirm no JSON schema errors.
-4. Confirm container stays `healthy`.
+1. Restart the stack/container.
+2. Check logs.
+3. Confirm container remains `healthy`.
 
-## Step 7: Join Test
+## Step 7: Test Connectivity
 
-1. Join from LAN first.
-2. Then join from external network.
-3. If external join fails, recheck router forwards.
+1. Test join from LAN.
+2. Test join from external network.
+3. If external join fails, re-check router forwards.
 
 ## Step 8: Optional Mods
 
-Add mods under `game.mods` in config:
+Add mods under `game.mods` in config, then restart.
 
-```json
-"mods": [
-  {
-    "modId": "5965550F24A0C152",
-    "name": "Where Am I"
-  }
-]
-```
-
-Restart container after mod changes.
-
-## Step 9: Common Fixes
-
-If config errors persist after image updates:
-
-1. Edit persisted file directly: `/mnt/user/appdata/arma-reforger/config/config.json`.
-2. Restart container.
-
-If first start looks stuck:
+## Step 9: If Something Fails
 
 1. Check `/mnt/user/appdata/arma-reforger/logs/steamcmd.log`.
-2. Wait for SteamCMD to finish.
-
-## Step 10: Final Checklist
-
-1. Repository is `ghcr.io/lcweller/arma-reforger-server:latest`.
-2. Volume is `/mnt/user/appdata/arma-reforger` -> `/app/data`.
-3. UDP ports are 2001, 17777, 19999.
-4. Router forwards match those UDP ports.
-5. Container status is `healthy`.
+2. Check container logs for JSON schema errors.
+3. If config keeps failing, re-open `/mnt/user/appdata/arma-reforger/config/config.json` and compare with [config/config.json](config/config.json).
 
 ## License
 
