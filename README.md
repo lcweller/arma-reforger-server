@@ -1,8 +1,6 @@
 # Arma Reforger On Unraid: Exact Deployment Steps
 
-This guide uses one deployment method only: the stack file [Arma-Reforger.yaml](Arma-Reforger.yaml).
-
-Users do not manually define container ports in this guide. Ports come from the YAML file.
+This guide uses one deployment method only: Unraid Docker Add Container.
 
 ## Step 1: Prepare Unraid
 
@@ -18,18 +16,19 @@ Forward these UDP ports to the Unraid server LAN IP:
 2. `17777/udp`
 3. `19999/udp`
 
-## Step 3: Deploy The Stack From YAML
+## Step 3: Deploy With Unraid Add Container
 
-1. Open Unraid Compose Manager (or Docker Compose plugin used on your Unraid setup).
-2. Create a new stack named `arma-reforger`.
-3. Paste the contents of [Arma-Reforger.yaml](Arma-Reforger.yaml) into the stack editor.
-4. Save and deploy the stack.
-
-The YAML already defines:
-
-1. Image: `ghcr.io/lcweller/arma-reforger-server:latest`
-2. Port mappings
-3. Volume mapping to `/app/data`
+1. Open Unraid Docker page.
+2. Click Add Container.
+3. Set `Name` to `arma-reforger`.
+4. Set `Repository` to `ghcr.io/lcweller/arma-reforger-server:latest`.
+5. Set `Network Type` to `bridge`.
+6. Add path mapping: Host `/mnt/user/appdata/arma-reforger` -> Container `/app/data` (Read/Write).
+7. Add UDP ports:
+8. Host `2001` -> Container `2001`.
+9. Host `17777` -> Container `17777`.
+10. Host `19999` -> Container `19999`.
+11. Click Apply.
 
 ## Step 4: Wait For First Boot
 
@@ -98,7 +97,7 @@ Change these values:
 
 ## Step 6: Restart
 
-1. Restart the stack/container.
+1. Restart the container.
 2. Check logs.
 3. Confirm container remains `healthy`.
 
