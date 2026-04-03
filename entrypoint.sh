@@ -14,6 +14,12 @@ LOGS_DIR="${LOGS_DIR:-/app/data/logs}"
 ADDITIONAL_STARTUP_ARGS="${ADDITIONAL_STARTUP_ARGS:-}"
 APP_ID="1874900"
 DEFAULT_CONFIG_TEMPLATE="/app/defaults/config.json"
+RUNTIME_CONFIG="$CONFIG_DIR/config.runtime.json"
+
+build_runtime_config() {
+    # Support full-line JSONC comments in config.json so users can toggle presets.
+    sed -E '/^[[:space:]]*\/\//d' "$CONFIG_DIR/config.json" > "$RUNTIME_CONFIG"
+}
 
 log "Starting Arma Reforger Server setup..."
 
@@ -42,16 +48,25 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     fi
 fi
 
+# Build runtime JSON (comments removed) before any jq processing.
+build_runtime_config
+
+if ! jq empty "$RUNTIME_CONFIG" >/dev/null 2>&1; then
+    log "ERROR: Config is not valid after removing comment lines from $CONFIG_DIR/config.json"
+    log "Hint: Keep comments on their own lines starting with //"
+    exit 1
+fi
+
 # Migrate legacy flat configs in persisted appdata to the current nested schema.
 if command -v jq >/dev/null 2>&1; then
-    if jq -e 'has("game") | not or has("adminPassword") or has("serverName") or has("serverDescription") or has("maxPlayers") or has("passwordProtected") or has("gameType") or has("map") or has("modsList")' "$CONFIG_DIR/config.json" >/dev/null 2>&1; then
+    if jq -e 'has("game") | not or has("adminPassword") or has("serverName") or has("serverDescription") or has("maxPlayers") or has("passwordProtected") or has("gameType") or has("map") or has("modsList")' "$RUNTIME_CONFIG" >/dev/null 2>&1; then
         log "Detected legacy flat config structure; migrating to nested schema"
         LEGACY_BACKUP="$CONFIG_DIR/config.legacy.$(date +%Y%m%d-%H%M%S).json"
         cp "$CONFIG_DIR/config.json" "$LEGACY_BACKUP"
 
         TMP_CONFIG="$CONFIG_DIR/config.json.tmp"
         jq \
-            --slurpfile legacy "$CONFIG_DIR/config.json" \
+            --slurpfile legacy "$RUNTIME_CONFIG" \
             '
                 .publicAddress = ($legacy[0].publicAddress // .publicAddress) |
                 .publicPort = ($legacy[0].publicPort // .publicPort) |
@@ -65,10 +80,13 @@ if command -v jq >/dev/null 2>&1; then
             ' "$DEFAULT_CONFIG_TEMPLATE" > "$TMP_CONFIG"
         mv "$TMP_CONFIG" "$CONFIG_DIR/config.json"
         log "Legacy config migrated and backup saved to $LEGACY_BACKUP"
+
+        # Rebuild runtime config from migrated canonical JSON.
+        build_runtime_config
     fi
 fi
 
-cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json" 2>/dev/null || true
+cp "$RUNTIME_CONFIG" "$SERVER_DIR/config.json" 2>/dev/null || true
 
 # Download/update server files via SteamCMD.
 log "Downloading server files via SteamCMD (App ID: $APP_ID)..."
@@ -119,7 +137,15 @@ if [ ! -f "$CONFIG_DIR/config.json" ]; then
     exit 1
 fi
 
-cp "$CONFIG_DIR/config.json" "$SERVER_DIR/config.json" 2>/dev/null || true
+# Rebuild runtime config after update in case the user edited config.json comments.
+build_runtime_config
+
+if ! jq empty "$RUNTIME_CONFIG" >/dev/null 2>&1; then
+    log "ERROR: Runtime config is invalid after install. Check $CONFIG_DIR/config.json comment formatting"
+    exit 1
+fi
+
+cp "$RUNTIME_CONFIG" "$SERVER_DIR/config.json" 2>/dev/null || true
 
 # Set proper permissions
 chmod +x "$SERVER_DIR/ArmaReforgerServer"
@@ -129,7 +155,7 @@ log "Starting Arma Reforger Server..."
 trap 'log "Shutting down..."; kill -TERM $SERVER_PID 2>/dev/null || true; exit 0' SIGTERM SIGINT
 
 cd "$SERVER_DIR"
-SERVER_CMD=(./ArmaReforgerServer -config "$CONFIG_DIR/config.json")
+SERVER_CMD=(./ArmaReforgerServer -config "$RUNTIME_CONFIG")
 
 if [ -n "$ADDITIONAL_STARTUP_ARGS" ]; then
     # shellcheck disable=SC2206

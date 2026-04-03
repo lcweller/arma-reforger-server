@@ -20,7 +20,9 @@
 		"password": "",
 		"passwordAdmin": "CHANGE_ME_STRONG_ADMIN_PASSWORD",
 		"admins": [],
+		// Scenario presets: uncomment one scenarioId line below to switch scenario.
 		"scenarioId": "{3F2E005F43DBD2F8}Missions/CAH_Briars_Coast.conf",
+		// "scenarioId": "{ECC61978EDCC2B5A}Missions/23_Campaign.conf",
 		"maxPlayers": 32,
 		"visible": true,
 		"gameProperties": {
@@ -34,6 +36,12 @@
 			"VONDisableDirectSpeechUI": false,
 			"VONCanTransmitCrossFaction": false
 		},
-		"mods": []
+		"mods": [
+			// Mod presets: remove // on one or more blocks to auto-download/apply on restart.
+			// {
+			// 	"modId": "5965550F24A0C152",
+			// 	"name": "Where Am I"
+			// }
+		]
 	}
 }
