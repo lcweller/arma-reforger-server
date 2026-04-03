@@ -39,11 +39,17 @@ Checklist:
 3. Allow these UDP ports in any upstream firewall.
 4. If ISP uses CGNAT, public reachability may fail until a public inbound path is available.
 
-## 3. Unraid Add Container Form (Exact Values)
+## 3. Unraid Template Deployment (Exact Values)
 
-Open Unraid Docker page, click Add Container, and fill these values.
+Open Unraid Docker page and deploy using the template values from [Arma-Reforger.yaml](Arma-Reforger.yaml).
 
-Core fields:
+Important deployment rule:
+
+1. Do not manually invent additional port entries.
+2. Port entries are defined by template and must be verified, not redesigned.
+3. If fields are auto-populated, keep them as shown in this document.
+
+Core fields to verify:
 
 1. `Name`: `arma-reforger` (or preferred name)
 2. `Repository`: `ghcr.io/lcweller/arma-reforger-server:latest`
@@ -56,13 +62,13 @@ Important:
 1. The image URL goes in the `Repository` field.
 2. Do not place the image URL in Name, Template URL, or any path field.
 
-Path mapping:
+Path mapping to verify:
 
 1. `Host Path 1`: `/mnt/user/appdata/arma-reforger`
 2. `Container Path 1`: `/app/data`
 3. Access mode: `Read/Write`
 
-Port mappings (all UDP):
+Port mappings to verify (all UDP):
 
 1. Host `2001` -> Container `2001`
 2. Host `17777` -> Container `17777`
@@ -71,7 +77,7 @@ Port mappings (all UDP):
 Port rules:
 
 1. Keep container ports fixed at `2001`, `17777`, `19999`.
-2. Host ports should match container ports unless there is a specific conflict plan.
+2. Host ports should match container ports.
 3. [Arma-Reforger.yaml](Arma-Reforger.yaml) already reflects this same port set.
 
 Optional env var for scenario discovery:
@@ -245,13 +251,15 @@ Run once, read logs, choose scenario, remove env var, restart.
 
 1. Repository field contains `ghcr.io/lcweller/arma-reforger-server:latest`.
 2. Single volume mapping exists: `/mnt/user/appdata/arma-reforger` -> `/app/data`.
-3. All three ports exist and are UDP.
-4. Container ports are exactly 2001/17777/19999.
-5. Router forwards exactly match those host UDP ports.
-6. `config.json` uses nested `game` schema.
-7. `serverMinGrassDistance` is at least 50.
-8. Placeholder passwords replaced.
-9. Container reaches `healthy` state.
+3. Port mappings came from template values, not ad-hoc manual additions.
+4. All three ports exist and are UDP.
+5. Container ports are exactly 2001/17777/19999.
+6. Host ports are exactly 2001/17777/19999.
+7. Router forwards exactly match those host UDP ports.
+8. `config.json` uses nested `game` schema.
+9. `serverMinGrassDistance` is at least 50.
+10. Placeholder passwords replaced.
+11. Container reaches `healthy` state.
 
 ## 10. Repository Reference Files
 
