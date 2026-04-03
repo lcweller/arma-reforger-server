@@ -1,20 +1,20 @@
 # Arma Reforger Dedicated Server On Unraid
 
-This guide is only for Unraid users deploying this image:
+This guide is a complete Unraid deployment manual for:
 
 `ghcr.io/lcweller/arma-reforger-server:latest`
 
-It includes every step from prerequisites to router setup, config edits, first boot validation, and common failure recovery.
+It covers prerequisites, Unraid container creation, router/firewall requirements, config editing, validation, and troubleshooting.
 
 ## Important Port Mapping Clarification
 
-You are correct: [Arma-Reforger.yaml](Arma-Reforger.yaml) already defines the container ports.
+[Arma-Reforger.yaml](Arma-Reforger.yaml) already documents the intended port set.
 
-What this means in Unraid:
+For Unraid deployment:
 
 1. Do not invent different container ports.
 2. Keep container ports fixed at `2001`, `17777`, and `19999` (UDP).
-3. In Unraid UI you are choosing host-side exposure. In normal setups, host and container ports should match.
+3. In Unraid UI, host ports should normally match container ports.
 
 ## 1. Unraid Prerequisites
 
@@ -53,12 +53,14 @@ Checklist:
 
 ## 3. Create the Container in Unraid
 
-In Unraid Docker page:
+In Unraid, open the Docker page and click Add Container.
 
-1. Click Add Container.
-2. Name it something like `Test5`.
-3. Set Image to `ghcr.io/lcweller/arma-reforger-server:latest`.
-4. Set Restart Policy to `unless-stopped`.
+Set these core fields:
+
+1. Name: `arma-reforger` (or any preferred name)
+2. Repository (Image): `ghcr.io/lcweller/arma-reforger-server:latest`
+3. Network Type: `bridge`
+4. Restart Policy: `unless-stopped`
 
 Add one path mapping:
 
@@ -66,7 +68,7 @@ Add one path mapping:
 2. Container Path: `/app/data`
 3. Access Mode: Read/Write
 
-Add port mappings (UDP):
+Add port mappings and set protocol to UDP for all:
 
 1. Host `2001` -> Container `2001` UDP
 2. Host `17777` -> Container `17777` UDP
@@ -85,7 +87,7 @@ On first boot, the container will:
 2. Create `/app/data/config/config.json` if missing.
 3. Download or verify Arma Reforger dedicated server files through SteamCMD.
 
-This can take multiple minutes.
+This step can take multiple minutes, especially on first deploy.
 
 Expected files after first start:
 
@@ -164,7 +166,7 @@ Critical validation rules:
 After config edits:
 
 1. Restart the container in Unraid.
-2. Watch logs.
+2. Open container logs.
 3. Confirm container remains `Up` and transitions to `healthy`.
 
 Validation checklist:
@@ -207,7 +209,7 @@ Check:
 
 First run verify/download of ~11 GB can take time.
 
-### C) Container starts then server not visible publicly
+### C) Container starts then server is not visible publicly
 
 Check in order:
 
@@ -222,7 +224,24 @@ Temporarily set env var in Unraid container:
 
 - `ADDITIONAL_STARTUP_ARGS=-listScenarios`
 
-Start once, read logs, choose scenario, remove the env var, restart.
+Start once, read logs, select the scenario ID/path, remove the env var, and restart.
+
+## 10. Unraid UI Field Reference
+
+Use this as a quick checklist while filling the Unraid Add Container form:
+
+1. `Name`: `arma-reforger`
+2. `Repository`: `ghcr.io/lcweller/arma-reforger-server:latest`
+3. `Network Type`: `bridge`
+4. `Console shell command`: default
+5. `Privileged`: `off`
+6. `Host Path 1`: `/mnt/user/appdata/arma-reforger`
+7. `Container Path 1`: `/app/data`
+8. `Port 1`: `2001` Host, `2001` Container, `UDP`
+9. `Port 2`: `17777` Host, `17777` Container, `UDP`
+10. `Port 3`: `19999` Host, `19999` Container, `UDP`
+
+If a Community Apps template is used, verify these values exactly before applying.
 
 ## 9. Security Checklist
 
@@ -231,7 +250,7 @@ Start once, read logs, choose scenario, remove the env var, restart.
 3. Keep image updated.
 4. Expose only required UDP ports.
 
-## 10. Files in This Repository
+## 11. Files in This Repository
 
 - [config/config.json](config/config.json): known-good baseline template
 - [entrypoint.sh](entrypoint.sh): startup and legacy config migration logic
