@@ -55,7 +55,7 @@ RUN chmod +x /app/entrypoint.sh
 
 # Health check - ensure the managed runtime-config game server process is present.
 HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=5 \
-    CMD ps -eo args | awk '$1=="./ArmaReforgerServer" && index($0,"-config /app/data/config/config.runtime.json")>0 {found=1} END{exit found?0:1}'
+    CMD ps -eo args | grep -F './ArmaReforgerServer -config /app/data/config/config.runtime.json' >/dev/null
 
 # Expose ports
 EXPOSE 2001/udp 17777/udp 19999/udp
